@@ -1,0 +1,10 @@
+{
+  "name": "adventofcode-2018",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "solve": "node src/index.js"
+  },
+  "author": "Arnis Jaundzeikars <sangsatori@users.noreply.github.com> (https://github.com/sangsatori)",
+  "license": "UNLICENSED"
+}
