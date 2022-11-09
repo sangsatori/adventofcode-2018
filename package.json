@@ -5,6 +5,10 @@
   "scripts": {
     "solve": "node src/index.js"
   },
+  "type": "module",
   "author": "Arnis Jaundzeikars <sangsatori@users.noreply.github.com> (https://github.com/sangsatori)",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "^18.11.9"
+  }
 }

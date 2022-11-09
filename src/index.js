@@ -1,21 +1,23 @@
-"use strict";
-const fs = require('fs');
+import * as fs from 'node:fs/promises';
 
-const puzzles = new Map([
-  ['day1', ['./day01.js', 'input/01.txt']],
-  ['day2', ['./day02.js', 'input/02.txt']]
-]);
+import day1 from './day01.js';
+import day2 from './day02.js';
 
-
-const run = (day) => {
-  const [solve, input] = puzzles.get(day);
-  fs.readFile(input, 'utf8', (err, data) => {
-    if (err) throw err;
-
-    const { pt1, pt2 } = require(solve)(data);
-    console.log(`${day} PART1: ${pt1()}`);
-    console.log(`${day} PART2: ${pt2()}`);
-  });
+async function run() {
+  for (let [i, solve] of [
+    [1, day1],
+    [2, day2],
+  ]) {
+    const day = (i).toString().padStart(2, 0);
+    const input = (await fs.readFile(`input/${day}.txt`, { encoding: 'utf-8' }))
+      .trim()
+      .split('\n');
+  
+    console.log(`DAY${day} --`);
+    solve(input).forEach((pt, i) => {
+      console.log(`* Pt. ${i+1}: ${pt()}`);
+    });
+  };
 }
 
-run('day2');
+run();
