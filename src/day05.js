@@ -1,88 +1,131 @@
-// linked lists?
+class CharLinkedList {
+    constructor(arr) {
+        this.size = arr.length;
+        this.data = new Map();
 
-/* const sample = 'dabAcCaCBAcCcaDA'; */
+        arr.map(value => [Symbol(), value]).forEach(([key, value], i, a) => {
+            if (i === 0)
+                this.head = key;
+            if (i === (this.size - 1))
+                this.tail = key;
+            this.data.set(key, {
+                value,
+                prev:
+                    i !== 0
+                    ? a[i-1][0]
+                    : null,
+                next:
+                    i < (this.size - 1)
+                    ? a[i+1][0]
+                    : null
+            });
+        });
+    }
+    *[Symbol.iterator]() {
+        let keyA = this.head;
+        while (keyA !== this.tail) {
+            const { value: valueA, next: keyB } = this.data.get(keyA);
+            yield [
+                [keyA, valueA], [
+                    keyB,
+                    this.data.get(keyB).value
+                ]
+            ];
+            keyA = keyB;
+        }
+    }
 
-// 0: dabAcCaCBAcCcaDA -> remove cC
-// 1: dabAaCBAcCcaDA -> remove Aa
-// 2: dabCBAcCcaDA -> cC
-// results in 'dabCBAcaDA'
+    [Symbol.toPrimitive](hint) {
+        switch (hint) {
+            case "number":
+                return this.size;
+            case "string":
+                let key = this.head;
+                let string = '';
+                while (key !== null) {
+                    const { value, next } = this.data.get(key);
+                    string += value;
+                    key = next;
+                }
+                return string;
+            case "default":
+            default:
+                return true;
+        }
+    }
 
-// let's print the linked list...
-function* readList({ head, data }) {
-    let key = head;
-    while (key !== null) {
-        let { value: { char, isUppercase }, next } = data.get(key);
-        yield isUppercase ? char.toUpperCase() : char;
-        key = next;
+    remove(key) {
+        const { prev, next } = this.data.get(key);
+
+        if (key !== this.head) {
+            this.data.get(prev).next = next;
+        } else {
+            this.head = next;
+        }
+
+        if (key !== this.tail) {
+            this.data.get(next).prev = prev;
+        } else {
+            this.tail = prev;
+        }
+
+        this.data.delete(key);
+        this.size -= 1;
     }
 }
 
+function eliminate(arr) {
+    let series = new CharLinkedList(arr);
+
+    let pendingSweep = new Set();
+    let lastSweepCount = 0;
+
+    do {
+        for (let [[keyA, valueA], [keyB, valueB]] of series) {
+            if (
+                valueA !== valueB
+                && valueA.toLowerCase() === valueB.toLowerCase()
+                && !pendingSweep.has(keyA)
+            ) {
+                pendingSweep.add(keyA);
+                pendingSweep.add(keyB);
+            }
+        }
+
+        lastSweepCount = pendingSweep.size;
+        for (let key of pendingSweep) {
+            series.remove(key);
+        }
+
+        pendingSweep.clear();
+    } while (lastSweepCount > 0);
+    return series;
+}
+
 export default (input) => {
-    // can we use WeakMap here..?
-    /* const tokens = sample.split(''); */
-    const tokens = input[0].split('');
+    const tokens = input[0];
 
     return [
+        () => Number(eliminate(tokens.split(''))), // 10762,
         () => {
-            const list = {
-                head: 0,
-                data: new Map(tokens.map((value, key, { length }) => [key, {
-                    // guess we can bastardize this...
-                    value: {
-                        char: value.toLowerCase(),
-                        isUppercase: Boolean(value.match(/[A-Z]/g))
-                    },
-                    prev:
-                        key !== 0
-                            ? (key - 1)
-                            : null,
-                    next:
-                        key < (length - 1)
-                            ? key + 1
-                            : null
-                }]))
-            };
+            const chars = new Set(input[0].toLowerCase().split(''));
+            const results = new Map();
 
-            let removed;
-            do {
-                removed = false;
-                // XXX: could implement an iterator here...
-                let key = list.head;
-                let a, b; // current, next
+            for (let char of chars) {
+                results.set(char, Number(eliminate(tokens.replaceAll(new RegExp(char, 'ig'), '').split(''))));
+            }
 
-                while (key !== null) {
-                    a = list.data.get(key);
-                    b = list.data.get(a.next);
-                    if (!a || !b) {
-                        break;
-                    };
-                    if ( // eliminate
-                        (a.value.char === b.value.char) // same char
-                        && (a.value.isUppercase !== b.value.isUppercase) // different cases
-                    ) {
-                        removed = true;
-                        if (a.prev === null) { // move head
-                            list.data.get(b.next).prev = null;
-                            list.head = b.next;
-                        } else {
-                            list.data.get(a.prev).next = b.next;
-                            if (b.next !== null) { // if not at tail
-                                list.data.get(b.next).prev = a.prev;
-                            }
-                        }
-                        key = b.next;
-                    } else { // none eliminated
-                        key = a.next; // go to next
-                    }
+            let shortestChar = null;
+            let shortestLength = null;;
+            for (let [char, length] of results.entries()) {
+                if ((length < shortestLength) || (shortestLength === null)) {
+                    shortestLength = length;
+                    shortestChar = char;
                 }
-            } while (removed);
+            }
 
-            // XXX: we can implement a .size property
-            // 10762
-            return [...readList()].length; // [...readList()].join(''); to read
-        },
-        () => {
-
+            console.log(`${shortestChar.toUpperCase()}/${shortestChar} @${shortestLength}`);
+            return shortestLength; // 6946
         }
     ]
 }
